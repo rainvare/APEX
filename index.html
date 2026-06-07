@@ -511,10 +511,17 @@ function renderForm(){
     eField.appendChild(eWrap);
     body.appendChild(eField);
 
-    body.appendChild(apexSelect("Velocidad de ejecución",profile.executionSpeed,[
-      {v:"explosive",l:"Explosiva — 1-0-X (potencia)"},{v:"standard",l:"Estándar — 2-0-2"},
-      {v:"controlled",l:"Controlada — 3-1-2"},{v:"slow",l:"Lenta — 4-2-4 (TUT máximo)"},
+    body.appendChild(apexSelect("Tempo de ejecución (excéntrica · pausa · concéntrica)",profile.executionSpeed,[
+      {v:"explosive",l:"1-0-X — concéntrica explosiva, excéntrica 1s"},{v:"standard",l:"2-0-2 — estándar"},
+      {v:"controlled",l:"3-1-2 — excéntrica lenta"},{v:"slow",l:"4-2-4 — TUT máximo"},
     ],v=>{profile.executionSpeed=v}));
+     // VBT note
+    const vbtNote = document.createElement("p");
+    vbtNote.className = "mono";
+    vbtNote.style.cssText = "font-size:10px;color:var(--t3);line-height:1.7;margin-top:-8px;margin-bottom:16px";
+    vbtNote.textContent = "Nota: la velocidad de ejecución real (m/s) se mide con dispositivos VBT (encoder lineal, acelerómetro). El tempo es la prescripción consciente de duración por fase.";
+    body.appendChild(vbtNote);
+
     body.appendChild(apexSelect("Preferencia de descanso",profile.restPreference,[
       {v:"shorter",l:"Corto — mayor densidad metabólica"},{v:"standard",l:"Estándar"},
       {v:"longer",l:"Largo — mayor recuperación neural"},
@@ -703,7 +710,7 @@ function renderResults(){
 
     const addCard=div("card mb14");
     addCard.appendChild(lbl("Variables adicionales"));
-    for(const[k,v] of [["Tempo",pg.tempo],["Descanso",pg.restStr],["RIR objetivo",pg.rir]]){
+    for(const[k,v] of [["Tempo (excéntrica·pausa·concéntrica)",pg.tempo],["Descanso",pg.restStr],["RIR objetivo",pg.rir]]){
       const row=div("flex jcsb aic");
       row.style.cssText="padding:9px 0;border-bottom:1px solid #1A1A1A";
       row.appendChild(h("p",{class:"mono",style:"font-size:12px;color:var(--t2)"},k));
@@ -805,4 +812,4 @@ function render(){
 render();
 </script>
 </body>
-</html>
+</html> 
