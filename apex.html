@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APEX — Program Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#080808;color:#F0EDE8}
+:root{
+  --gold:#C9A84C;--gold-dim:#8A6F32;--gold-glow:rgba(201,168,76,.15);
+  --gold-line:rgba(201,168,76,.3);
+  --ink:#080808;--ink2:#111;--ink3:#1A1A1A;--ink4:#242424;--ink5:#2E2E2E;
+  --t1:#F0EDE8;--t2:#C8BFB0;--t3:#908070;
+  --red:#C0392B;--green:#27AE60;--warn:#E67E22;
+}
+.serif{font-family:'Playfair Display',Georgia,serif}
+.mono{font-family:'DM Mono',monospace}
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:up .4s cubic-bezier(.22,.68,0,1.2) both}
+input[type=range]{-webkit-appearance:none;width:100%;height:2px;background:var(--ink5);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer}
+select option{background:#111;color:#F0EDE8}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--ink5);border-radius:3px}
+.gold-gradient{background:linear-gradient(135deg,#E8CE80,#C9A84C,#A07830,#C9A84C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* layout */
+#app{min-height:100vh}
+.page{min-height:100vh;background:#080808;color:#F0EDE8}
+.maxw{max-width:540px;margin:0 auto;padding:0 16px}
+.hidden{display:none!important}
+
+/* form elements */
+.apex-input,.apex-select{
+  width:100%;background:#111;border:1px solid #2E2E2E;border-radius:8px;
+  padding:10px 13px;font-size:13px;color:#F0EDE8;font-family:'DM Mono',monospace;
+  outline:none;display:block;transition:border-color .2s,box-shadow .2s
+}
+.apex-input:focus,.apex-select:focus{border-color:var(--gold-dim);box-shadow:0 0 0 3px var(--gold-glow)}
+.field{margin-bottom:16px}
+.lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;display:block}
+
+/* cards */
+.card{background:#111;border:1px solid #242424;border-radius:12px;padding:14px 16px}
+.card-gold{background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.25);border-radius:12px;padding:14px 16px}
+.gold-line{height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.3),transparent);margin:18px 0}
+
+/* buttons */
+.btn-gold{
+  width:100%;padding:13px 24px;border-radius:10px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#C9A84C,#8A6F32);color:#080808;
+  font-family:'DM Mono',monospace;font-weight:700;font-size:11px;
+  letter-spacing:.2em;text-transform:uppercase;transition:opacity .15s,transform .15s
+}
+.btn-gold:hover{opacity:.9;transform:translateY(-1px)}
+.btn-gold:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.btn-ghost{
+  padding:13px 20px;border-radius:10px;cursor:pointer;background:#111;
+  border:1px solid #2E2E2E;color:var(--t2);font-family:'DM Mono',monospace;
+  font-size:11px;letter-spacing:.1em;transition:border-color .15s,color .15s
+}
+.btn-ghost:hover{border-color:var(--gold-dim);color:var(--gold)}
+.btn-ghost.flex1{flex:1;text-align:center}
+.toggle-btn{
+  padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;
+  font-family:'DM Mono',monospace;transition:all .15s;
+  background:#111;border:1px solid #2E2E2E;color:var(--t2)
+}
+.toggle-btn.active{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.5);color:var(--gold)}
+.clin-btn{
+  padding:9px 11px;border-radius:8px;cursor:pointer;font-size:11px;
+  font-family:'DM Mono',monospace;text-align:left;display:flex;
+  align-items:center;justify-content:space-between;
+  background:#111;border:1px solid #2E2E2E;color:var(--t2)
+}
+.clin-btn.active{background:rgba(192,57,43,.12);border-color:rgba(192,57,43,.5);color:#E88080}
+
+/* sticky header */
+.sticky-header{
+  position:sticky;top:0;z-index:20;
+  background:rgba(8,8,8,.97);backdrop-filter:blur(12px);
+  border-bottom:1px solid #1A1A1A;padding:13px 16px
+}
+/* fixed nav */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(8,8,8,.97);backdrop-filter:blur(12px);
+  border-top:1px solid #1A1A1A;padding:12px 16px 24px
+}
+.bottom-nav .maxw{display:flex;gap:9px}
+
+/* stat grid */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.stat-box{background:#111;border:1px solid #242424;border-radius:12px;padding:12px;text-align:center}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+
+/* progress bars */
+.prog-bars{display:flex;gap:5px;margin-bottom:7px}
+.prog-bar{flex:1;height:2px;border-radius:2px;background:#2E2E2E;transition:background .3s}
+.prog-bar.done{background:linear-gradient(90deg,#8A6F32,#C9A84C)}
+
+/* tabs */
+.tabs{display:flex;border-bottom:1px solid #1A1A1A}
+.tab-btn{
+  flex:1;padding:7px 0;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  font-family:'DM Mono',monospace;background:none;border:none;cursor:pointer;
+  border-bottom:2px solid transparent;color:var(--t3);margin-bottom:-1px;transition:color .15s
+}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* block card */
+.block-card{border-radius:10px;margin-bottom:8px;overflow:hidden}
+.block-header{width:100%;padding:13px 15px;display:flex;align-items:flex-start;gap:11px;background:none;border:none;cursor:pointer;text-align:left}
+.block-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.block-body{padding:13px 15px 13px 48px}
+.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
+.mini-box{background:rgba(0,0,0,.3);border-radius:6px;padding:8px 10px}
+
+/* timeline bar */
+.timeline-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:6px}
+.tl-labels{display:flex;justify-content:space-between;margin-bottom:14px}
+
+/* alert badges */
+.alert-badge{border-radius:8px;padding:10px 13px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.6;margin-bottom:7px}
+
+/* pill tag */
+.pill{
+  background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);
+  border-radius:4px;padding:2px 8px;font-size:10px;color:var(--gold);
+  font-family:'DM Mono',monospace
+}
+
+/* splash */
+#splash{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;position:relative}
+.deco-line{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.12),transparent)}
+
+/* flex helpers */
+.flex{display:flex}.gap-7{gap:7px}.gap-8{gap:8px}.gap-9{gap:9px}
+.flex-wrap{flex-wrap:wrap}.flex1{flex:1}
+.jcsb{justify-content:space-between}.aic{align-items:center}.ais{align-items:flex-start}
+.mb4{margin-bottom:4px}.mb6{margin-bottom:6px}.mb8{margin-bottom:8px}
+.mb10{margin-bottom:10px}.mb12{margin-bottom:12px}.mb14{margin-bottom:14px}
+.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}
+.pt20{padding-top:20px}.pb100{padding-bottom:100px}.pb40{padding-bottom:40px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  SCIENTIFIC ENGINE
+// ═══════════════════════════════════════════
+const ZONES={
+  strength:   {reps:"1–6",  pct:[85,100],sets:[3,6],rest:[180,300],rir:"0–1"},
+  power:      {reps:"1–5",  pct:[75,95], sets:[3,5],rest:[180,300],rir:"0–1"},
+  hypertrophy:{reps:"6–12", pct:[67,85], sets:[3,6],rest:[60,120], rir:"1–3"},
+  endurance:  {reps:"15–25",pct:[40,65], sets:[2,4],rest:[20,60],  rir:"3–5"},
+  health:     {reps:"8–15", pct:[50,75], sets:[2,4],rest:[60,120], rir:"2–4"},
+  weightloss: {reps:"10–20",pct:[50,70], sets:[3,4],rest:[30,60],  rir:"2–4"},
+  athletic:   {reps:"3–8",  pct:[75,95], sets:[3,5],rest:[120,300],rir:"1–2"},
+};
+const ACSM={none:{opt:3},beginner:{opt:3},intermediate:{opt:4},advanced:{opt:5}};
+const BOMPA={
+  none:        {acc:6,trn:4,rea:2,tra:2},
+  beginner:    {acc:5,trn:4,rea:2,tra:1},
+  intermediate:{acc:4,trn:3,rea:2,tra:1},
+  advanced:    {acc:3,trn:3,rea:2,tra:1},
+};
+const BLOCK_META={
+  acc:{label:"Acumulación", color:"#3B82F6",focus:"Volumen alto · intensidad moderada · base aeróbica y técnica",adapt:"Hipertrofia sarcomérica · densidad mitocondrial",weekly:"3:1 — 3 sem carga + 1 descarga",vm:1.3,im:.85},
+  trn:{label:"Transmutación",color:"#C9A84C",focus:"Volumen moderado · intensidad alta · conversión a fuerza específica",adapt:"Reclutamiento UM · sincronización · stiffness tendinoso",weekly:"2:1 — 2 sem carga + 1 descarga",vm:1.0,im:1.1},
+  rea:{label:"Realización", color:"#10B981",focus:"Volumen bajo · intensidad máxima · peak de rendimiento",adapt:"PAP · expresión máxima de fuerza/potencia",weekly:"1:1 — carga + taper",vm:.6,im:1.2},
+  tra:{label:"Transición",  color:"#64748B",focus:"Recuperación activa · carga mínima · aeróbico suave",adapt:"Supercompensación · recuperación SNC",weekly:"Libre / actividad recreacional",vm:.4,im:.6},
+};
+const DUP={
+  strength:   ["Fuerza — 85–95% 1RM · 1–5 reps","Potencia — 60–75% · explosivo","Hipertrofia — 70–80% · 6–10 reps"],
+  hypertrophy:["Volumen — 67–75% · 10–12 reps","Pesado — 80–85% · 6–8 reps","Metabólico — 60–70% · 12–15 reps"],
+  power:      ["Potencia máx — 75–90% · 1–3 reps","Fuerza-vel — 55–70% · explosivo","Técnica — 50–60%"],
+  athletic:   ["Potencia — 55–70% · explosivo","Fuerza — 80–90% · 3–5 reps","Vel-fuerza — 30–50%"],
+  health:     ["Resistencia — 50–65% · 12–15 reps","Funcional — 60–70% · 8–12 reps","Activación — 40–55% · 15–20 reps"],
+  weightloss: ["Circuito metabólico — alta densidad","Fuerza base — 65–75% · 8–10 reps","HIIT complementario"],
+  endurance:  ["Resistencia local — 40–55% · 20+ reps","Circuito funcional — 50–65%","Core y estabilidad"],
+};
+
+function getHorm(bio,age){
+  const xx=bio==="XX"||bio==="Turner",kl=bio==="Klinefelter",old=parseInt(age)>50;
+  if(kl)         return{T:"Muy bajo",    a:"Limitada",    r:"Lenta",   n:"Volumen moderado-alto, intensidad moderada. Mayor sensibilidad al sobreentrenamiento.",dF:-1,dI:-5};
+  if(bio==="Turner") return{T:"Muy bajo",a:"Muy limitada",r:"Lenta",   n:"Énfasis en salud ósea. Carga muy gradual. Coordinación con endocrinología.",dF:-1,dI:-10};
+  if(xx&&old)    return{T:"Bajo",        a:"Moderada",    r:"Moderada",n:"Post-menopausia: fuerza para preservar masa ósea y muscular (ACSM ≥ 2×/semana).",dF:0,dI:0};
+  if(xx)         return{T:"Bajo-normal", a:"Buena",       r:"Buena",   n:"Adaptar volumen al ciclo. Folicular: mayor tolerancia. Lútea: reducir carga relativa.",dF:0,dI:0};
+  if(old)        return{T:"Mod-bajo",    a:"Reducida",    r:"Moderada",n:"Sarcopenia: fuerza es prioritaria. Descanso inter-sesión ≥ 48h.",dF:-1,dI:-5};
+  return         {T:"Normal-alto",       a:"Alta",        r:"Rápida",  n:"Buena respuesta anabólica. Tolera mayor volumen e intensidad.",dF:0,dI:0};
+}
+
+function runEngine(p){
+  try{
+    const goal=(p.goals&&p.goals[0])||"health";
+    const goal2=(p.goals&&p.goals[1])||null;
+    const base=ZONES[goal]||ZONES.health;
+    const hist=p.trainingHistory||"beginner";
+    const clin=p.clinicalHistory||{};
+    let pctMax=base.pct[1];
+    if(clin.cardiovascular) pctMax=Math.min(pctMax,75);
+    if(clin.metabolic)      pctMax=Math.min(pctMax,80);
+    if(clin.osteoarticular) pctMax=Math.min(pctMax,70);
+    if(clin.neurological)   pctMax=Math.min(pctMax,65);
+    const horm=getHorm(p.biologicalConfig||"XY",p.age||30);
+    const optFreq=(ACSM[hist]||ACSM.beginner).opt;
+    let freq=Math.min(p.availability||3,optFreq)+horm.dF;
+    if(clin.endocrine) freq=Math.min(freq,4);
+    freq=Math.max(2,Math.min(freq,6));
+    const iMin=Math.max(30,base.pct[0]+horm.dI);
+    const iMax=Math.min(105,pctMax+horm.dI);
+    const restRaw=clin.respiratory?[Math.max(base.rest[0],60),Math.max(base.rest[1],120)]:base.rest;
+    const rMult=p.restPreference==="shorter"?.75:p.restPreference==="longer"?1.35:1;
+    const restStr=`${Math.round(restRaw[0]*rMult)}–${Math.round(restRaw[1]*rMult)} seg`;
+    const tempos={explosive:"1-0-X",standard:"2-0-2",controlled:"3-1-2",slow:"4-2-4"};
+    const tempo=tempos[p.executionSpeed]||"2-0-2";
+    const dur=clin.respiratory?"≤ 40 min":hist==="advanced"?"60–90 min":"45–60 min";
+    const meso=BOMPA[hist]||BOMPA.beginner;
+    const totalWeeks=meso.acc+meso.trn+meso.rea+meso.tra;
+    const dup=DUP[goal]||DUP.health;
+    let sw=1;
+    const mkBlock=(key,weeks)=>{
+      const m=BLOCK_META[key];
+      const b={key,label:m.label,color:m.color,focus:m.focus,adapt:m.adapt,weekly:m.weekly,
+        weeks,startWeek:sw,endWeek:sw+weeks-1,
+        sets:`${Math.max(2,Math.round(base.sets[0]*m.vm))}–${Math.round(base.sets[1]*m.vm)}`,
+        intensity:`${Math.min(105,Math.round(iMin*m.im))}–${Math.min(105,Math.round(iMax*m.im))}% 1RM`,
+        reps:key==="rea"?(goal==="endurance"?"10–15":"1–5"):key==="acc"?(hist==="none"||hist==="beginner"?"12–20":base.reps):base.reps,
+        rir:key==="acc"?"3–5":key==="trn"?base.rir:key==="rea"?"0–1":"sin fallo",
+        dup:key==="tra"?["Movilidad y activación","Cardio ligero + estiramientos"]:dup,
+      };
+      sw+=weeks; return b;
+    };
+    const blocks=[mkBlock("acc",meso.acc),mkBlock("trn",meso.trn),mkBlock("rea",meso.rea),mkBlock("tra",meso.tra)];
+    const splits={
+      2:{type:"Full Body 2×",       detail:"Mismo estímulo ambas sesiones. Progresión lineal."},
+      3:{type:"Full Body A-B-A",    detail:"Alternancia A/B. Cada patrón 2× cada 7 días."},
+      4:{type:"Upper / Lower 2×",   detail:"Lun-Jue superior · Mar-Vie inferior. ≥72h entre iguales."},
+      5:{type:"PPL + Upper/Lower",  detail:"PPL en acumulación. Upper/Lower en transmutación/realización."},
+      6:{type:"Especialización 6×", detail:"Por grupos musculares. ≥48h recuperación local."},
+    };
+    const split=splits[Math.min(6,Math.max(2,freq))]||splits[4];
+    const prog={
+      none:"Progresión lineal — +2.5 kg tren superior / +5 kg tren inferior por sesión exitosa.",
+      beginner:"Progresión lineal — +2.5 kg tren superior / +5 kg tren inferior por sesión exitosa.",
+      intermediate:"DUP semanal (Bompa carga compleja) — variar reps/intensidad entre sesiones.",
+      advanced:"Periodización por bloques con DUP — PR objetivo en bloque de realización.",
+    }[hist]||"Progresión lineal.";
+    const deload={
+      none:"Sem. 4: reducir vol. 40%, mantener intensidad.",
+      beginner:"Sem. 4: reducir vol. 40%, mantener intensidad.",
+      intermediate:"Última sem. de cada mesociclo: reducir vol. 30–40%.",
+      advanced:"Última sem. de cada bloque: taper vol. −50%, intensidad mantenida.",
+    }[hist]||"Descarga cada 4 semanas.";
+    const alerts=[];
+    if(clin.cardiovascular) alerts.push({l:"high",t:"Cardiovascular: FC < 80% FCmáx. Sin Valsalva. RPE ≤ 14."});
+    if(clin.metabolic)      alerts.push({l:"high",t:"Metabólico: Glucemia 100–250 mg/dL pre-entreno."});
+    if(clin.osteoarticular) alerts.push({l:"med", t:"Osteoarticular: Carga axial reducida. ROM indoloro. Regresiones obligatorias."});
+    if(clin.respiratory)    alerts.push({l:"med", t:"Respiratorio: Exhalar en concéntrica. Sin apnea. SpO₂ > 94%."});
+    if(clin.neurological)   alerts.push({l:"med", t:"Neurológico: Fase aprendizaje motor 4–6 sem antes de progresar carga."});
+    if(clin.endocrine)      alerts.push({l:"low", t:"Endocrino: Eje HPA sensible. Monitorear fatiga y recuperación."});
+    const w=parseFloat(p.weight)||70,h=parseFloat(p.height)||170;
+    const bmi=w/((h/100)**2);
+    const bmiCat=bmi<18.5?"Bajo peso":bmi<25?"Normal":bmi<30?"Sobrepeso":"Obesidad";
+    const waist=parseFloat(p.waist)||0;
+    const waistRisk=waist>0?((p.biologicalConfig==="XX"||p.biologicalConfig==="Turner")?(waist>88?"⚠ Riesgo metabólico (>88 cm)":"Normal"):(waist>102?"⚠ Riesgo metabólico (>102 cm)":"Normal")):"No registrado";
+    const caloricMap={
+      hypercaloric:{hypertrophy:{s:"ok",n:"Superávit + hipertrofia = óptimo. Proteína ≥1.6 g/kg/día (ISSN)."},strength:{s:"ok",n:"Superávit facilita recuperación y adaptación neural."},weightloss:{s:"bad",n:"Superávit en conflicto con pérdida de peso. Revisar prioridad."},default:{s:"meh",n:"Superávit sin objetivo hipertrófico. Riesgo de aumento graso."}},
+      hypocaloric: {weightloss:{s:"ok",n:"Déficit 300–500 kcal/día. Proteína ≥2.2 g/kg para preservar masa magra."},hypertrophy:{s:"bad",n:"Déficit limita síntesis proteica neta. Solo recomposición en principiantes."},default:{s:"meh",n:"Déficit moderado. Con proteína alta puede mantenerse masa magra."}},
+      isocaloric:  {default:{s:"meh",n:"Isocalórico: recomposición corporal gradual. Proteína 1.6–2.2 g/kg/día."}},
+    };
+    const calKey=p.caloric||"isocaloric";
+    const gKey=[goal,goal2].find(g=>g&&caloricMap[calKey]&&caloricMap[calKey][g])||"default";
+    const caloricNote=(caloricMap[calKey]&&(caloricMap[calKey][gKey]||caloricMap[calKey].default))||{s:"meh",n:"Ajustar régimen calórico según objetivo."};
+    return{ok:true,freq,split,iMin,iMax,reps:base.reps,restStr,rir:base.rir,tempo,dur,blocks,totalWeeks,prog,deload,horm,caloricNote,alerts,bmi:bmi.toFixed(1),bmiCat,waistRisk,goal,goal2};
+  }catch(e){return{ok:false,error:e.message}}
+}
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+const GOALS=[
+  {v:"strength",l:"Fuerza máxima",i:"⚡"},{v:"hypertrophy",l:"Hipertrofia",i:"◈"},
+  {v:"power",l:"Potencia",i:"▲"},{v:"weightloss",l:"Pérdida de peso",i:"◌"},
+  {v:"endurance",l:"Resistencia muscular",i:"∞"},{v:"health",l:"Salud general",i:"◎"},
+  {v:"athletic",l:"Rendimiento atlético",i:"◆"},
+];
+const EQUIP=[
+  {v:"barbell",l:"Barra olímpica"},{v:"dumbbell",l:"Mancuernas"},{v:"machine",l:"Máquinas"},
+  {v:"cable",l:"Poleas"},{v:"kettlebell",l:"Kettlebells"},{v:"bands",l:"Bandas"},
+  {v:"trx",l:"TRX"},{v:"bodyweight",l:"Peso corporal"},
+];
+const CLINICAL=[
+  {k:"cardiovascular",l:"Cardiovascular"},{k:"metabolic",l:"Metabólico"},
+  {k:"endocrine",l:"Endocrino"},{k:"osteoarticular",l:"Osteoarticular"},
+  {k:"respiratory",l:"Respiratorio"},{k:"muscular",l:"Muscular"},
+  {k:"neurological",l:"Neurológico"},
+];
+
+let profile={
+  name:"",age:"",biologicalConfig:"XY",height:"",weight:"",waist:"",
+  activityLevel:"sedentary",trainingHistory:"beginner",
+  goals:["health"],
+  clinicalHistory:{metabolic:false,endocrine:false,muscular:false,osteoarticular:false,respiratory:false,cardiovascular:false,neurological:false},
+  availability:3,equipment:["bodyweight"],
+  caloric:"isocaloric",executionSpeed:"standard",restPreference:"standard",
+};
+let currentStep=0;
+let currentView="splash"; // splash | form | results
+let currentTab="macro";
+let openBlocks={};
+
+// ═══════════════════════════════════════════
+//  RENDER HELPERS
+// ═══════════════════════════════════════════
+function h(tag,attrs,...children){
+  const el=document.createElement(tag);
+  for(const[k,v] of Object.entries(attrs||{})){
+    if(k==="class") el.className=v;
+    else if(k.startsWith("on")) el.addEventListener(k.slice(2).toLowerCase(),v);
+    else el.setAttribute(k,v);
+  }
+  for(const c of children){
+    if(c==null||c===false) continue;
+    el.appendChild(typeof c==="string"?document.createTextNode(c):c);
+  }
+  return el;
+}
+function div(cls,...ch){return h("div",{class:cls},...ch)}
+function p(cls,txt){const el=h("p",{class:cls},txt);return el}
+function span(cls,txt){return h("span",{class:cls},txt)}
+function lbl(txt){return h("span",{class:"lbl"},txt)}
+function goldLine(){return div("gold-line")}
+
+function apexInput(labelTxt,type,val,onChange,placeholder,min,max){
+  const wrap=div("field");
+  wrap.appendChild(lbl(labelTxt));
+  const input=h("input",{class:"apex-input",type,value:val||"",placeholder:placeholder||""});
+  if(min) input.setAttribute("min",min);
+  if(max) input.setAttribute("max",max);
+  input.addEventListener("input",e=>{
+    const v=type==="number"?(parseFloat(e.target.value)||""):e.target.value;
+    onChange(v);
+  });
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function apexSelect(labelTxt,val,options,onChange){
+  const wrap=div("field");
+  wrap.appendChild(lbl(labelTxt));
+  const sel=h("select",{class:"apex-select"});
+  for(const o of options){
+    const opt=h("option",{value:o.v},o.l);
+    if(o.v===val) opt.selected=true;
+    sel.appendChild(opt);
+  }
+  sel.addEventListener("change",e=>onChange(e.target.value));
+  wrap.appendChild(sel);
+  return wrap;
+}
+
+// ═══════════════════════════════════════════
+//  VIEWS
+// ═══════════════════════════════════════════
+function renderSplash(){
+  return div("page",
+    h("div",{id:"splash"},
+      h("div",{class:"deco-line",style:"top:20%"}),
+      h("div",{class:"deco-line",style:"bottom:22%"}),
+      h("div",{style:"max-width:380px;width:100%;text-align:center"},
+        h("p",{class:"mono",style:"font-size:10px;letter-spacing:.35em;color:var(--gold);text-transform:uppercase;margin-bottom:14px"},"Science of Strength"),
+        h("h1",{class:"serif gold-gradient",style:"font-size:60px;font-weight:700;line-height:1;margin-bottom:6px"},"APEX"),
+        h("div",{style:"height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.4),transparent);width:60px;margin:10px auto 14px"}),
+        h("p",{class:"mono",style:"font-size:10px;color:var(--t3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:28px"},"Program Designer"),
+        h("p",{class:"mono",style:"font-size:12px;color:var(--t2);line-height:1.8;margin-bottom:32px"},
+          "Prescripción científica basada en ",
+          h("br",{}),
+          h("span",{style:"color:var(--gold)"},"NSCA · ACSM · Bompa · Issurin")
+        ),
+        h("button",{class:"btn-gold",onClick:()=>navigate("form")},"INICIAR EVALUACIÓN"),
+        h("p",{class:"mono",style:"font-size:10px;color:var(--t3);margin-top:10px"},"Anamnesis completa · Macrociclo personalizado")
+      )
+    )
+  );
+}
+
+function renderForm(){
+  const STEPS=["Biometría","Historia","Clínico","Logística"];
+  const SUBS=["Datos antropométricos","Entrenamiento y objetivos","Antecedentes médicos","Disponibilidad y recursos"];
+  const canGenerate=!!(profile.age&&profile.height&&profile.weight&&profile.goals.length>0);
+
+  // Header
+  const header=div("sticky-header");
+  const hw=div("maxw");
+  const htop=div("flex jcsb aic mb10");
+  htop.appendChild(h("p",{class:"serif gold-gradient",style:"font-size:18px;font-weight:700"},"APEX"));
+  htop.appendChild(h("p",{class:"mono",style:"font-size:9px;color:var(--t3);letter-spacing:.15em"},`PASO ${currentStep+1} / ${STEPS.length}`));
+  hw.appendChild(htop);
+
+  const bars=div("prog-bars");
+  for(let i=0;i<STEPS.length;i++){
+    const b=div("prog-bar"+(i<=currentStep?" done":""));
+    bars.appendChild(b);
+  }
+  hw.appendChild(bars);
+
+  const htitles=div("flex jcsb");
+  htitles.appendChild(h("p",{class:"serif",style:"font-size:14px;font-weight:600;color:var(--t1)"},STEPS[currentStep]));
+  htitles.appendChild(h("p",{class:"mono",style:"font-size:10px;color:var(--t3)"},SUBS[currentStep]));
+  hw.appendChild(htitles);
+  header.appendChild(hw);
+
+  // Body
+  const body=div("maxw pt20 pb100 anim");
+  if(currentStep===0){
+    body.appendChild(apexInput("Nombre","text",profile.name,v=>{profile.name=v},"Nombre completo"));
+    body.appendChild(apexInput("Edad (años)","number",profile.age,v=>{profile.age=v},null,14,100));
+    body.appendChild(apexSelect("Configuración biológica",profile.biologicalConfig,[
+      {v:"XY",l:"XY"},{v:"XX",l:"XX"},{v:"Klinefelter",l:"Klinefelter (XXY)"},{v:"Turner",l:"Turner (X0)"},{v:"other",l:"Otra / No indicar"},
+    ],v=>{profile.biologicalConfig=v}));
+    body.appendChild(apexInput("Estatura (cm)","number",profile.height,v=>{profile.height=v},null,100,230));
+    body.appendChild(apexInput("Peso (kg)","number",profile.weight,v=>{profile.weight=v},null,30,300));
+    body.appendChild(apexInput("Perímetro abdominal (cm) — opcional","number",profile.waist,v=>{profile.waist=v},"Opcional",50,200));
+  }
+  else if(currentStep===1){
+    body.appendChild(apexSelect("Nivel de actividad física",profile.activityLevel,[
+      {v:"sedentary",l:"Sedentario (< 1h/sem)"},{v:"light",l:"Ligeramente activo (1–3h/sem)"},
+      {v:"moderate",l:"Moderadamente activo (3–5h/sem)"},{v:"active",l:"Activo (5–7h/sem)"},{v:"very_active",l:"Muy activo / deportista"},
+    ],v=>{profile.activityLevel=v}));
+    body.appendChild(apexSelect("Historia de entrenamiento con cargas",profile.trainingHistory,[
+      {v:"none",l:"Sin experiencia"},{v:"beginner",l:"Principiante (< 1 año)"},
+      {v:"intermediate",l:"Intermedio (1–3 años)"},{v:"advanced",l:"Avanzado (> 3 años)"},
+    ],v=>{profile.trainingHistory=v}));
+
+    const gField=div("field mb16");
+    gField.appendChild(lbl("Objetivos — hasta 3, en orden de prioridad"));
+    const gWrap=div("flex flex-wrap gap-7");
+    for(const g of GOALS){
+      const idx=profile.goals.indexOf(g.v), sel=idx!==-1;
+      const btn=h("button",{
+        class:"toggle-btn"+(sel?" active":""),
+        onClick:()=>{
+          if(profile.goals.includes(g.v)) profile.goals=profile.goals.filter(x=>x!==g.v);
+          else if(profile.goals.length<3) profile.goals=[...profile.goals,g.v];
+          render();
+        }
+      },g.i+" "+g.l);
+      if(sel){
+        btn.appendChild(h("span",{style:"background:#C9A84C;color:#080808;font-size:9px;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;margin-left:4px"},String(idx+1)));
+      }
+      gWrap.appendChild(btn);
+    }
+    gField.appendChild(gWrap);
+    body.appendChild(gField);
+
+    body.appendChild(apexSelect("Régimen calórico actual",profile.caloric,[
+      {v:"hypocaloric",l:"Hipocalórico (déficit)"},{v:"isocaloric",l:"Isocalórico (mantenimiento)"},{v:"hypercaloric",l:"Hipercalórico (superávit)"},
+    ],v=>{profile.caloric=v}));
+  }
+  else if(currentStep===2){
+    const cField=div("field mb14");
+    cField.appendChild(lbl("Antecedentes clínicos — marcar si existen"));
+    const cGrid=div("");
+    cGrid.style.cssText="display:grid;grid-template-columns:1fr 1fr;gap:7px";
+    for(const f of CLINICAL){
+      const active=profile.clinicalHistory[f.k];
+      const btn=h("button",{
+        class:"clin-btn"+(active?" active":""),
+        onClick:()=>{profile.clinicalHistory[f.k]=!profile.clinicalHistory[f.k];render();}
+      },f.l,active?span("","  ✓"):null);
+      cGrid.appendChild(btn);
+    }
+    cField.appendChild(cGrid);
+    body.appendChild(cField);
+    body.appendChild(h("p",{class:"mono",style:"font-size:10px;color:var(--t3);line-height:1.8"},
+      "Los antecedentes activos modifican el techo de intensidad, los intervalos de descanso y generan alertas de seguridad basadas en ACSM."
+    ));
+  }
+  else if(currentStep===3){
+    const rField=div("field mb20");
+    rField.appendChild(lbl(`Días disponibles por semana — ${profile.availability}`));
+    const range=h("input",{type:"range",min:1,max:7,value:profile.availability,style:"margin-top:8px;margin-bottom:6px"});
+    range.addEventListener("input",e=>{profile.availability=parseInt(e.target.value);render();});
+    rField.appendChild(range);
+    const nums=div("flex jcsb");
+    for(let n=1;n<=7;n++){
+      nums.appendChild(h("span",{class:"mono",style:`font-size:10px;color:${n===profile.availability?"var(--gold)":"var(--t3)"}`},String(n)));
+    }
+    rField.appendChild(nums);
+    body.appendChild(rField);
+
+    const eField=div("field mb16");
+    eField.appendChild(lbl("Implementos disponibles"));
+    const eWrap=div("flex flex-wrap gap-7");
+    for(const e of EQUIP){
+      const active=profile.equipment.includes(e.v);
+      eWrap.appendChild(h("button",{
+        class:"toggle-btn"+(active?" active":""),
+        onClick:()=>{
+          profile.equipment=profile.equipment.includes(e.v)?profile.equipment.filter(x=>x!==e.v):[...profile.equipment,e.v];
+          render();
+        }
+      },e.l));
+    }
+    eField.appendChild(eWrap);
+    body.appendChild(eField);
+
+    body.appendChild(apexSelect("Velocidad de ejecución",profile.executionSpeed,[
+      {v:"explosive",l:"Explosiva — 1-0-X (potencia)"},{v:"standard",l:"Estándar — 2-0-2"},
+      {v:"controlled",l:"Controlada — 3-1-2"},{v:"slow",l:"Lenta — 4-2-4 (TUT máximo)"},
+    ],v=>{profile.executionSpeed=v}));
+    body.appendChild(apexSelect("Preferencia de descanso",profile.restPreference,[
+      {v:"shorter",l:"Corto — mayor densidad metabólica"},{v:"standard",l:"Estándar"},
+      {v:"longer",l:"Largo — mayor recuperación neural"},
+    ],v=>{profile.restPreference=v}));
+  }
+
+  // Bottom nav
+  const nav=div("bottom-nav");
+  const navW=div("maxw");
+  if(currentStep>0){
+    navW.appendChild(h("button",{class:"btn-ghost",onClick:()=>{currentStep--;render();}},"← Atrás"));
+  }
+  if(currentStep<STEPS.length-1){
+    navW.appendChild(h("button",{class:"btn-ghost flex1",onClick:()=>{currentStep++;render();}},"Siguiente →"));
+  } else {
+    const genBtn=h("button",{
+      class:"btn-gold",
+      style:"flex:1",
+      onClick:()=>{if(canGenerate){navigate("results");}}
+    },canGenerate?"⚡ GENERAR MACROCICLO":"COMPLETA LOS DATOS");
+    if(!canGenerate) genBtn.disabled=true;
+    navW.appendChild(genBtn);
+  }
+  nav.appendChild(navW);
+
+  const page=div("page");
+  page.appendChild(header);
+  page.appendChild(body);
+  page.appendChild(nav);
+  return page;
+}
+
+function renderBlockCard(block,index){
+  const col=block.color||"#64748B";
+  const wrap=div("block-card");
+  wrap.style.cssText=`background:${col}12;border:1px solid ${col}40`;
+
+  const btn=h("button",{class:"block-header",onClick:()=>{
+    openBlocks[block.key]=!openBlocks[block.key];render();
+  }});
+  const dot=div("block-dot");
+  dot.style.background=col;
+  dot.appendChild(h("span",{style:"color:#000;font-size:10px;font-weight:700;font-family:'DM Mono',monospace"},String(index+1)));
+  btn.appendChild(dot);
+  const info=div("flex1");
+  const titleRow=div("flex jcsb aic mb4");
+  titleRow.appendChild(h("span",{class:"serif",style:`color:${col};font-size:14px;font-weight:600`},block.label));
+  titleRow.appendChild(h("span",{class:"mono",style:"color:var(--t3);font-size:10px"},`S${block.startWeek}–${block.endWeek} ${openBlocks[block.key]?"▲":"▼"}`));
+  info.appendChild(titleRow);
+  info.appendChild(h("p",{class:"mono",style:"color:var(--t2);font-size:11px;line-height:1.5"},block.focus));
+  btn.appendChild(info);
+  wrap.appendChild(btn);
+
+  if(openBlocks[block.key]){
+    const body=div("block-body");
+    body.style.borderTop=`1px solid ${col}40`;
+    const miniGrid=div("mini-grid");
+    for(const[k,v] of [["Series",block.sets],["Intensidad",block.intensity],["Reps",block.reps],["RIR",block.rir]]){
+      const box=div("mini-box");
+      box.appendChild(h("p",{class:"mono",style:"color:var(--t3);font-size:9px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px"},k));
+      box.appendChild(h("p",{class:"mono",style:"color:var(--t1);font-size:12px;font-weight:500"},v));
+      miniGrid.appendChild(box);
+    }
+    body.appendChild(miniGrid);
+    for(const[k,v] of [["Estructura semanal",block.weekly],["Adaptación principal",block.adapt]]){
+      body.appendChild(lbl(k));
+      body.appendChild(h("p",{class:"mono mb10",style:"color:var(--t2);font-size:11px"},v));
+    }
+    body.appendChild(lbl("Rotación DUP"));
+    block.dup.forEach((s,i)=>{
+      const row=div("flex mb6");
+      row.appendChild(h("span",{class:"mono",style:"color:var(--t3);font-size:10px;width:18px;flex-shrink:0"},`D${i+1}`));
+      row.appendChild(h("p",{class:"mono",style:"color:var(--t2);font-size:11px;line-height:1.4"},s));
+      body.appendChild(row);
+    });
+    wrap.appendChild(body);
+  }
+  return wrap;
+}
+
+function renderResults(){
+  const pg=runEngine(profile);
+  const goalLabel=(GOALS.find(g=>g.v===pg.goal)||{l:pg.goal||"health"}).l;
+
+  if(!pg.ok){
+    return div("page",
+      h("div",{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px"},
+        h("p",{class:"mono",style:"color:#E88080;margin-bottom:12px"},"Error al generar programa:"),
+        h("p",{class:"mono",style:"color:var(--t3);font-size:12px"},pg.error),
+        h("button",{class:"btn-ghost",style:"margin-top:20px",onClick:()=>navigate("form")},"← Volver")
+      )
+    );
+  }
+
+  // Header
+  const header=div("sticky-header");
+  const hw=div("maxw");
+  const htop=div("flex jcsb aic mb10");
+  const leftH=div("flex aic");
+  leftH.style.gap="10px";
+  const backBtn=h("button",{style:"background:none;border:none;cursor:pointer;color:var(--t3);font-size:18px;line-height:1;padding:0 2px",onClick:()=>navigate("form")},"←");
+  backBtn.addEventListener("mouseenter",e=>e.currentTarget.style.color="var(--gold)");
+  backBtn.addEventListener("mouseleave",e=>e.currentTarget.style.color="var(--t3)");
+  const nameInfo=div("");
+  nameInfo.appendChild(h("p",{class:"mono",style:"font-size:9px;color:var(--gold);letter-spacing:.2em;text-transform:uppercase;margin-bottom:2px"},"APEX · Programa"));
+  nameInfo.appendChild(h("p",{class:"serif",style:"font-size:15px;font-weight:600;color:var(--t1)"},profile.name||"Cliente"));
+  leftH.appendChild(backBtn);
+  leftH.appendChild(nameInfo);
+  const rightH=div("");
+  rightH.style.textAlign="right";
+  rightH.appendChild(h("p",{class:"mono",style:"font-size:10px;color:var(--t3);margin-bottom:3px"},pg.totalWeeks+" semanas"));
+  rightH.appendChild(h("span",{class:"pill"},goalLabel));
+  htop.appendChild(leftH);
+  htop.appendChild(rightH);
+  hw.appendChild(htop);
+
+  const tabs=div("tabs");
+  for(const[k,l] of [["macro","Macrociclo"],["fitt","FITT·VP"],["clinical","Clínico"]]){
+    tabs.appendChild(h("button",{class:"tab-btn"+(currentTab===k?" active":""),onClick:()=>{currentTab=k;render();openBlocks={};}}),l);
+    tabs.lastChild.textContent=l;
+  }
+  hw.appendChild(tabs);
+  header.appendChild(hw);
+
+  // Content
+  const content=div("maxw pt20 pb40 anim");
+
+  if(currentTab==="macro"){
+    // Stats
+    const sg=div("stat-grid");
+    for(const[l,v] of [["Frecuencia",`${pg.freq}× / sem`],["Sesión",pg.dur],["Split",pg.split.type]]){
+      const box=div("stat-box");
+      box.appendChild(h("p",{class:"lbl",style:"margin-bottom:5px"},l));
+      box.appendChild(h("p",{class:"mono",style:"font-size:12px;font-weight:500;color:var(--t1);line-height:1.3"},v));
+      sg.appendChild(box);
+    }
+    content.appendChild(sg);
+
+    // Timeline
+    const tlCard=div("card mb14");
+    tlCard.appendChild(lbl(`Timeline — ${pg.totalWeeks} semanas`));
+    const tlBar=div("timeline-bar");
+    for(const b of pg.blocks){
+      const seg=div("");
+      seg.style.cssText=`width:${(b.weeks/pg.totalWeeks*100).toFixed(1)}%;background:${b.color};opacity:.8`;
+      tlBar.appendChild(seg);
+    }
+    tlCard.appendChild(tlBar);
+    const tlLbls=div("tl-labels");
+    for(const b of pg.blocks){
+      tlLbls.appendChild(h("span",{class:"mono",style:`font-size:9px;color:${b.color}`},b.label.slice(0,3).toUpperCase()+" "+b.weeks+"s"));
+    }
+    tlCard.appendChild(tlLbls);
+    content.appendChild(tlCard);
+
+    content.appendChild(lbl("Bloques — Modelo Issurin"));
+    pg.blocks.forEach((b,i)=>content.appendChild(renderBlockCard(b,i)));
+
+    content.appendChild(goldLine());
+
+    const progCard=div("card mb14");
+    progCard.appendChild(lbl("Progresión — Modelo Bompa"));
+    progCard.appendChild(h("p",{class:"serif",style:"font-size:13px;color:var(--gold);font-weight:600;margin-bottom:10px"},pg.prog.split("—")[0]));
+    progCard.appendChild(lbl("Regla de carga"));
+    progCard.appendChild(h("p",{class:"mono mb10",style:"font-size:11px;color:var(--t2);line-height:1.6"},pg.prog));
+    progCard.appendChild(lbl("Descarga"));
+    progCard.appendChild(h("p",{class:"mono",style:"font-size:11px;color:var(--t2);line-height:1.6"},pg.deload));
+    content.appendChild(progCard);
+
+    const splitCard=div("card-gold");
+    splitCard.appendChild(lbl("Distribución semanal"));
+    splitCard.appendChild(h("p",{class:"serif",style:"font-size:14px;color:var(--t1);font-weight:600;margin-bottom:5px"},pg.split.type));
+    splitCard.appendChild(h("p",{class:"mono",style:"font-size:11px;color:var(--t2);line-height:1.6"},pg.split.detail));
+    content.appendChild(splitCard);
+  }
+  else if(currentTab==="fitt"){
+    content.appendChild(lbl("Variables FITT-VP — NSCA / ACSM"));
+    const grid=div("two-col");
+    for(const[k,v] of [["F — Frecuencia",`${pg.freq}× / semana`],["I — Intensidad",`${pg.iMin}–${pg.iMax}% 1RM`],["T — Tiempo",pg.dur],["T — Tipo",pg.split.type],["V — Volumen",`${pg.reps} reps`],["P — Progresión",pg.prog.split("—")[0]]]){
+      const box=div("card");
+      box.appendChild(h("p",{class:"lbl",style:"margin-bottom:5px"},k));
+      box.appendChild(h("p",{class:"mono",style:"font-size:12px;color:var(--t1);font-weight:500;line-height:1.4"},v));
+      grid.appendChild(box);
+    }
+    content.appendChild(grid);
+
+    const addCard=div("card mb14");
+    addCard.appendChild(lbl("Variables adicionales"));
+    for(const[k,v] of [["Tempo",pg.tempo],["Descanso",pg.restStr],["RIR objetivo",pg.rir]]){
+      const row=div("flex jcsb aic");
+      row.style.cssText="padding:9px 0;border-bottom:1px solid #1A1A1A";
+      row.appendChild(h("p",{class:"mono",style:"font-size:12px;color:var(--t2)"},k));
+      row.appendChild(h("span",{class:"pill"},v));
+      addCard.appendChild(row);
+    }
+    content.appendChild(addCard);
+
+    const cn=pg.caloricNote;
+    const cbg=cn.s==="ok"?"rgba(39,174,96,.08)":cn.s==="bad"?"rgba(192,57,43,.1)":"#111";
+    const cbc=cn.s==="ok"?"rgba(39,174,96,.3)":cn.s==="bad"?"rgba(192,57,43,.35)":"#242424";
+    const ctc=cn.s==="ok"?"#6EE7B7":cn.s==="bad"?"#E88080":"var(--t2)";
+    const calCard=div("");
+    calCard.style.cssText=`background:${cbg};border:1px solid ${cbc};border-radius:12px;padding:14px 16px;margin-bottom:14px`;
+    calCard.appendChild(lbl("Régimen calórico"));
+    const calTag=h("span",{class:"mono",style:`font-size:9px;letter-spacing:.15em;text-transform:uppercase;padding:2px 8px;border-radius:4px;background:${cbg};border:1px solid ${cbc};color:${ctc};margin-bottom:8px;display:inline-block`},cn.s==="ok"?"Alineado":cn.s==="bad"?"Conflicto":"Neutral");
+    calCard.appendChild(calTag);
+    calCard.appendChild(h("p",{class:"mono",style:"font-size:11px;color:var(--t2);line-height:1.6;margin-top:6px"},cn.n));
+    content.appendChild(calCard);
+
+    const hormCard=div("card-gold");
+    hormCard.appendChild(lbl("Perfil hormonal / adaptativo"));
+    const hg=div("");
+    hg.style.cssText="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px";
+    for(const[k,v] of [["Testosterona",pg.horm.T],["Cap. anabólica",pg.horm.a],["Recuperación",pg.horm.r]]){
+      const box=div("");
+      box.style.cssText="background:rgba(0,0,0,.3);border-radius:6px;padding:7px;text-align:center";
+      box.appendChild(h("p",{class:"mono",style:"font-size:9px;color:var(--t3);margin-bottom:3px"},k));
+      box.appendChild(h("p",{class:"mono",style:"font-size:10px;color:var(--t1);font-weight:500;line-height:1.3"},v));
+      hg.appendChild(box);
+    }
+    hormCard.appendChild(hg);
+    hormCard.appendChild(h("p",{class:"mono",style:"font-size:11px;color:var(--t2);line-height:1.7"},pg.horm.n));
+    content.appendChild(hormCard);
+  }
+  else if(currentTab==="clinical"){
+    const bmiGrid=div("two-col");
+    for(const[k,v] of [["IMC",`${pg.bmi} — ${pg.bmiCat}`],["Perímetro abd.",pg.waistRisk]]){
+      const hasRisk=String(v).includes("⚠");
+      const box=div("card");
+      if(hasRisk) box.style.cssText="background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.4);border-radius:12px;padding:14px 16px";
+      box.appendChild(h("p",{class:"lbl"},k));
+      box.appendChild(h("p",{class:"mono",style:`font-size:12px;color:${hasRisk?"var(--warn)":"var(--t1)"};font-weight:500`},v));
+      bmiGrid.appendChild(box);
+    }
+    content.appendChild(bmiGrid);
+
+    if(pg.alerts.length>0){
+      content.appendChild(lbl("Alertas clínicas activas"));
+      for(const a of pg.alerts){
+        const bg=a.l==="high"?"rgba(192,57,43,.1)":a.l==="med"?"rgba(230,126,34,.1)":"rgba(201,168,76,.07)";
+        const bc=a.l==="high"?"rgba(192,57,43,.4)":a.l==="med"?"rgba(230,126,34,.35)":"rgba(201,168,76,.3)";
+        const tc=a.l==="high"?"#E88080":a.l==="med"?"#F0A060":"var(--gold)";
+        const badge=div("alert-badge");
+        badge.style.cssText=`background:${bg};border:1px solid ${bc};color:${tc}`;
+        badge.textContent=a.t;
+        content.appendChild(badge);
+      }
+    } else {
+      const ok=div("card mb16");
+      ok.appendChild(h("p",{class:"mono",style:"font-size:12px;color:#6EE7B7;margin-bottom:3px"},"✓ Sin antecedentes clínicos"));
+      ok.appendChild(h("p",{class:"mono",style:"font-size:11px;color:var(--t3)"},"Prescripción estándar sin restricciones."));
+      content.appendChild(ok);
+    }
+
+    content.appendChild(goldLine());
+    const legalCard=div("card");
+    legalCard.appendChild(lbl("Aviso profesional"));
+    legalCard.appendChild(h("p",{class:"mono",style:"font-size:11px;color:var(--t3);line-height:1.8"},"APEX es una herramienta de apoyo basada en guías NSCA y ACSM. No reemplaza la evaluación médica directa. Ante síntomas inusuales, detener sesión y consultar profesional de salud."));
+    content.appendChild(legalCard);
+  }
+
+  const page=div("page");
+  page.appendChild(header);
+  page.appendChild(content);
+  return page;
+}
+
+// ═══════════════════════════════════════════
+//  NAVIGATION + RENDER LOOP
+// ═══════════════════════════════════════════
+function navigate(view){
+  currentView=view;
+  if(view==="form") currentStep=0;
+  if(view==="results") openBlocks={};
+  render();
+}
+
+function render(){
+  const app=document.getElementById("app");
+  app.innerHTML="";
+  let view;
+  if(currentView==="splash")   view=renderSplash();
+  else if(currentView==="form")    view=renderForm();
+  else if(currentView==="results") view=renderResults();
+  app.appendChild(view);
+}
+
+render();
+</script>
+</body>
+</html>
